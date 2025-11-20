@@ -1,5 +1,5 @@
-// 상태: 참가자 객체 { name, phone }
-let participants = [];
+// 상태: 상품 객체 { item, probability }
+let items = [];
 
 // 룰렛 회전 상태
 let angle = 0;
@@ -15,17 +15,24 @@ const resetBtn = document.getElementById('resetBtn');
 const shuffleBtn = document.getElementById('shuffleBtn');
 const clearBtn = document.getElementById('clearBtn');
 
-const inputName = document.getElementById('inputName');
-const inputPhone = document.getElementById('inputPhone');
+const inputItem = document.getElementById('inputItem');
+const inputProb = document.getElementById('inputProb');
 const addBtn = document.getElementById('addBtn');
 
 const bulkInput = document.getElementById('bulkInput');
 const bulkApplyBtn = document.getElementById('bulkApplyBtn');
 const bulkResult = document.getElementById('bulkResult');
 
-const participantList = document.getElementById('participantList');
+const itemList = document.getElementById('itemList');
 const countText = document.getElementById('countText');
 const resultText = document.getElementById('resultText');
+
+// 로그인 요소
+const loginScreen = document.getElementById('loginScreen');
+const rouletteScreen = document.getElementById('rouletteScreen');
+const loginName = document.getElementById('loginName');
+const loginPhone = document.getElementById('loginPhone');
+const loginBtn = document.getElementById('loginBtn');
 
 // 유틸
 const normalize = a => {
@@ -34,42 +41,33 @@ const normalize = a => {
   return a < 0 ? a + twoPI : a;
 };
 const colorAt = (i, n) => `hsl(${Math.round((360/n)*i)} 70% 50%)`;
-function normalizePhone(p){ return (p||"").replace(/\D+/g,""); }
-function existsByPhone(p){
-  const np = normalizePhone(p);
-  return participants.some(x => normalizePhone(x.phone) === np);
-}
-function existsByName(n){
-  const nn = (n||"").trim();
-  return participants.some(x => x.name === nn);
-}
 
 // LocalStorage 저장/불러오기
-function saveParticipants(){
-  localStorage.setItem("rouletteParticipants", JSON.stringify(participants));
+function saveItems(){
+  localStorage.setItem("rouletteItems", JSON.stringify(items));
 }
-function loadParticipants(){
-  const saved = localStorage.getItem("rouletteParticipants");
-  if(saved){ participants = JSON.parse(saved); }
+function loadItems(){
+  const saved = localStorage.getItem("rouletteItems");
+  if(saved){ items = JSON.parse(saved); }
 }
 
 // 리스트 렌더링
 function renderList(){
-  participantList.innerHTML = "";
-  participants.forEach((p,i)=>{
+  itemList.innerHTML = "";
+  items.forEach((p,i)=>{
     const li = document.createElement("li");
     li.innerHTML = `
       <div>
-        <strong>${p.name}</strong>
-        <span class="badge">· ${p.phone}</span>
+        <strong>${p.item}</strong>
+        <span class="badge">· ${p.probability}%</span>
       </div>
       <button data-i="${i}" class="editBtn">수정</button>
       <button data-i="${i}" class="delBtn">삭제</button>
     `;
-    participantList.appendChild(li);
+    itemList.appendChild(li);
   });
-  countText.textContent = participants.length;
-  saveParticipants(); // 렌더링할 때마다 저장
+  countText.textContent = items.length;
+  saveItems();
 }
 
 // 룰렛 그리기
@@ -79,23 +77,26 @@ function drawWheel(){
   const r = Math.min(cx, cy) - 10;
   ctx.clearRect(0,0,w,h);
 
-  if(participants.length===0){
+  if(items.length===0){
     ctx.fillStyle='#222a36';
     ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
     ctx.fillStyle='#9aa3b2';
     ctx.font='bold 28px system-ui';
     ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('참가자를 추가하세요',cx,cy);
+    ctx.fillText('상품을 추가하세요',cx,cy);
     return;
   }
 
-  const slice=(Math.PI*2)/participants.length;
-  for(let i=0;i<participants.length;i++){
-    const start=angle+i*slice;
-    const end=start+slice;
+  const totalProb = items.reduce((sum,x)=>sum+x.probability,0);
+  let start = angle;
+
+  for(let i=0;i<items.length;i++){
+    const slice = (Math.PI*2) * (items[i].probability/totalProb);
+    const end = start + slice;
+
     ctx.beginPath(); ctx.moveTo(cx,cy);
     ctx.arc(cx,cy,r,start,end); ctx.closePath();
-    ctx.fillStyle=colorAt(i,participants.length); ctx.fill();
+    ctx.fillStyle=colorAt(i,items.length); ctx.fill();
     ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=2; ctx.stroke();
 
     const mid=start+slice/2;
@@ -104,9 +105,10 @@ function drawWheel(){
     ctx.save(); ctx.translate(tx,ty); ctx.rotate(mid+Math.PI/2);
     ctx.fillStyle='#fff'; ctx.font='600 20px system-ui';
     ctx.textAlign='center'; ctx.textBaseline='middle';
-    const label=participants[i].name.length>12?participants[i].name.slice(0,11)+'…':participants[i].name;
-    ctx.fillText(label,0,0);
+    ctx.fillText(items[i].item,0,0);
     ctx.restore();
+
+    start=end;
   }
 
   ctx.beginPath(); ctx.arc(cx,cy,r*0.08,0,Math.PI*2);
@@ -115,14 +117,20 @@ function drawWheel(){
 
 // 승자 계산
 function announceWinner(){
-  if(participants.length===0){ resultText.textContent=''; return; }
-  const slice=(Math.PI*2)/participants.length;
+  if(items.length===0){ resultText.textContent=''; return; }
+  const totalProb = items.reduce((sum,x)=>sum+x.probability,0);
   const pointerAngle=-Math.PI/2;
   const a=normalize(pointerAngle-angle);
-  let index=Math.floor(a/slice);
-  if(index>=participants.length) index=participants.length-1;
-  const p=participants[index];
-  resultText.textContent=`결과: ${p.name} (${p.phone})`;
+
+  let acc=0;
+  for(let i=0;i<items.length;i++){
+    const slice=(Math.PI*2)*(items[i].probability/totalProb);
+    if(a>=acc && a<acc+slice){
+      resultText.textContent=`결과: ${items[i].item}`;
+      return;
+    }
+    acc+=slice;
+  }
 }
 
 // 애니메이션 루프
@@ -142,23 +150,19 @@ function tick(){
 
 // 이벤트: 추가
 addBtn.addEventListener('click',()=>{
-  const name=inputName.value.trim();
-  const phone=normalizePhone(inputPhone.value);
-  if(!name||!phone){
-    alert('이름과 전화번호를 모두 입력하세요.');
+  const item=inputItem.value.trim();
+  const prob=parseInt(inputProb.value,10);
+  if(!item||!prob||prob<=0){
+    alert('상품명과 확률을 올바르게 입력하세요.');
     return;
   }
-  if(existsByPhone(phone) || existsByName(name)){
+  if(items.some(x=>x.item===item)){
     alert('중복되는 내용이 있습니다.');
     return;
   }
-  participants.push({name,phone});
-  inputName.value=''; inputPhone.value='';
+  items.push({item,probability:prob});
+  inputItem.value=''; inputProb.value='';
   renderList(); drawWheel();
-});
-
-inputPhone.addEventListener('input', () => {
-  inputPhone.value = inputPhone.value.replace(/\D/g, ''); // 숫자가 아닌 문자 제거
 });
 
 // 이벤트: 대량 적용
@@ -167,63 +171,57 @@ bulkApplyBtn.addEventListener('click',()=>{
   let added=0, skipped=0;
   for(const line of lines){
     const s=line.trim(); if(!s) continue;
-    const [nameRaw,phoneRaw]=s.split(',').map(x=>(x||'').trim());
-    const name=nameRaw; const phone=normalizePhone(phoneRaw);
-    if(!name||!phone){ skipped++; continue; }
-    if(existsByPhone(phone) || existsByName(name)){
-      skipped++;
-      continue;
-    }
-    participants.push({name,phone}); added++;
+    const [itemRaw,probRaw]=s.split(',').map(x=>(x||'').trim());
+    const item=itemRaw; const prob=parseInt(probRaw,10);
+    if(!item||!prob||prob<=0){ skipped++; continue; }
+    if(items.some(x=>x.item===item)){ skipped++; continue; }
+    items.push({item,probability:prob}); added++;
   }
   if(skipped>0){
     alert('중복되는 내용이 있습니다.');
   }
+  bulkResult.textContent=`추가 ${added}개, 건너뜀 ${skipped}개`;
   bulkInput.value='';
   renderList(); drawWheel();
 });
 
 // 삭제/수정 버튼
-participantList.addEventListener('click',(e)=>{
+itemList.addEventListener('click',(e)=>{
   const i=e.target.dataset.i;
   if(i===undefined) return;
   if(e.target.classList.contains('delBtn')){
-    participants.splice(Number(i),1);
+    items.splice(Number(i),1);
     renderList(); drawWheel();
   } else if(e.target.classList.contains('editBtn')){
-    const p=participants[Number(i)];
-    const name=prompt('이름 수정',p.name);
-    if(name===null) return;
-    const phone=prompt('전화번호 수정 (숫자만)',p.phone);
-    if(phone===null) return;
-    const np=normalizePhone(phone);
-    if(!name||!np) return;
-    const dup=participants.some((x,idx)=>
-      idx!==Number(i) && (normalizePhone(x.phone)===np || x.name===name)
-    );
+    const p=items[Number(i)];
+    const item=prompt('상품명 수정',p.item);
+    if(item===null) return;
+    const prob=parseInt(prompt('확률 수정 (%)',p.probability),10);
+    if(!item||!prob||prob<=0) return;
+    const dup=items.some((x,idx)=>idx!==Number(i)&&x.item===item);
     if(dup){
       alert('중복되는 내용이 있습니다.');
       return;
     }
-    participants[Number(i)]={name,phone:np};
+    items[Number(i)]={item,probability:prob};
     renderList(); drawWheel();
   }
 });
 
 // 기타 이벤트
 shuffleBtn.addEventListener('click',()=>{
-  for(let i=participants.length-1;i>0;i--){
+  for(let i=items.length-1;i>0;i--){
     const j=Math.floor(Math.random()*(i+1));
-    [participants[i],participants[j]]=[participants[j],participants[i]];
+    [items[i],items[j]]=[items[j],items[i]];
   }
   renderList(); drawWheel();
 });
 clearBtn.addEventListener('click',()=>{
   if(!confirm('전체 삭제하시겠습니까?')) return;
-  participants=[]; renderList(); drawWheel();
+  items=[]; renderList(); drawWheel();
 });
 spinBtn.addEventListener('click',()=>{
-  if(participants.length===0) return;
+  if(items.length===0) return;
   spinning=true;
   spinVel=0.35+Math.random()*0.55;
   resultText.textContent='돌리는 중...';
@@ -233,8 +231,30 @@ resetBtn.addEventListener('click',()=>{
   resultText.textContent='';
 });
 
+loginPhone.addEventListener('input', () => {
+  loginPhone.value = loginPhone.value.replace(/\D/g, '');
+});
+
+// 로그인 이벤트
+loginBtn.addEventListener('click', () => {
+  const name = loginName.value.trim();
+  const phone = loginPhone.value.replace(/\D/g,''); // 숫자만
+  if(!name || !phone){
+    alert('이름과 전화번호를 모두 입력하세요.');
+    return;
+  }
+  // 로그인 성공 → 화면 전환
+  loginScreen.style.display = 'none';
+  rouletteScreen.style.display = 'grid';
+
+  // 로그인 정보 저장(선택)
+  localStorage.setItem('userName', name);
+  localStorage.setItem('userPhone', phone);
+});
+
+
 // 초기화
-loadParticipants();   // 저장된 참가자 불러오기
+loadItems();
 renderList();
 drawWheel();
 tick();
