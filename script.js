@@ -88,13 +88,13 @@ loginBtn.addEventListener('click', () => {
 
     // Google Apps Script로 FormData 전송 (CORS 회피: no-cors)
     const formData = new FormData();
-    formData.append('name', name);
-    formData.append('phone', phone);
+    formData.append("name", name);   // 반드시 소문자
+    formData.append("phone", "`" + phone); // 반드시 소문자
 
     // exec URL로 교체하세요
     fetch('https://script.google.com/macros/s/AKfycbzKeTDSq4GSEIKN33lEOnqKvd9X3zt1PvxV9CsMIJmKbEsEe8sfvAv2h4eUjPvjymzC/exec', {
-      method: 'POST',
-      mode: 'no-cors',
+      method: "POST",
+      mode: "no-cors",
       body: formData
     }).catch(() => {
       // no-cors 모드에서는 응답을 읽을 수 없으므로 에러 처리만 보류
