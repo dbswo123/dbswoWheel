@@ -81,13 +81,15 @@ loginBtn.addEventListener('click', () => {
     }, fadeDuration);
 
 
+    // ⭐⭐⭐ 수정된 스프레드시트 전송코드 ⭐⭐⭐
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("phone", phone);
 
-    // ⭐⭐⭐ 구글 스프레드시트 전송 부분 추가 ⭐⭐⭐
     fetch("https://script.google.com/macros/s/AKfycbwdjHi8XeC9ShgozpBzNYDgYcKS-XepoXkapZSCJXwbiBB6jAZoN5nz1jhlOyS0kNPk/exec", {
       method: "POST",
       mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone })
+      body: formData   // ⬅ JSON 대신 FormData 사용 (중요)
     });
 
     // localStorage 저장
@@ -96,7 +98,6 @@ loginBtn.addEventListener('click', () => {
 
   }, slideDuration + extraDelay);
 });
-
 
 // 저장/불러오기
 function saveItems() {
@@ -179,7 +180,7 @@ function announceWinner() {
     return;
   }
   const totalProb = items.reduce((sum, x) => sum + x.probability, 0);
-  const pointerAngle = -Math.PI / 2; // 상단 포인터
+  const pointerAngle = -Math.PI / 2;
   const a = normalize(pointerAngle - angle);
 
   let acc = 0;
