@@ -4,8 +4,10 @@
   --text: #e8eaed;
   --accent: #6ca0ff;
   --muted: #8a90a2;
+  --arrow-visible: 60px; /* 왼쪽 상단 화살표 버튼 폭 + 여유(px) */
 }
 
+/* 기본 리셋 */
 * { box-sizing: border-box; user-select: none; }
 html, body {
   height: 100%;
@@ -16,19 +18,37 @@ html, body {
   overflow-x: hidden;
 }
 
-/* Prevent scrolling while in login */
+/* 로그인 모드 */
 body.login-mode {
   overflow: hidden;
+  background: linear-gradient(135deg, #ffffff 0%, #f5fbff 60%, #e8f6ff 100%);
+  color: #333;
 }
 
 .hidden { display: none; }
 
-/* 로그인 카드 */
-#loginScreen {
-  position: relative;  /* 👈 로그인창이 맨 위에 보이게 */
-  z-index: 10;
+/* 공통 UI */
+.credit {
+  position: fixed;
+  bottom: 12px;
+  right: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ff7a1a;
+  opacity: 0.9;
+  z-index: 50;
 }
 
+.brand-logo {
+  display: block;
+  margin: 0 auto 8px;
+  height: 72px;
+  width: auto;
+}
+body.login-mode .brand-logo { filter: drop-shadow(0 2px 6px rgba(255,122,26,0.25)); }
+
+/* 로그인 카드 */
+#loginScreen { position: relative; z-index: 10; }
 .login-card {
   background: #1c1f26;
   border-radius: 16px;
@@ -40,189 +60,217 @@ body.login-mode {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  align-items: stretch;
   transition: transform 0.6s ease, opacity 0.6s ease;
 }
-
-.login-card h2 {
-  color: #e8eaed;
-  font-size: 22px;
-  text-align: center;
-  margin-bottom: 8px;
+body.login-mode .login-card {
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid #eef3f7;
 }
-
+.login-card h2 { color: #e8eaed; font-size: 22px; text-align: center; margin-bottom: 8px; }
+body.login-mode .login-card h2 { color: #ff7a1a; font-weight: 700; }
 .login-card input {
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #2f3542;
-  background: #0f141b;
-  color: #e8eaed;
-  font-size: 16px;
+  padding: 12px; border-radius: 10px; border: 1px solid #2f3542; background: #0f141b; color: #e8eaed; font-size: 16px;
 }
-
+body.login-mode .login-card input {
+  border: 1px solid #d9e2ea; background: #f8fafc; color: #222; box-shadow: 0 1px 0 rgba(0,0,0,0.02) inset;
+}
 .login-card button {
-  padding: 12px;
-  border-radius: 10px;
-  background: #3478f6;
-  color: white;
-  font-weight: bold;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s;
+  padding: 12px; border-radius: 10px; background: #3478f6; color: white; font-weight: bold; border: none; cursor: pointer; transition: background 0.2s;
 }
-.login-card button:hover {
-  background: #2c6de0;
-}
+.login-card button:hover { background: #2c6de0; }
+body.login-mode .login-card button { background: linear-gradient(90deg, #ff7a1a, #ff9e3d); box-shadow: 0 6px 14px rgba(255, 122, 26, 0.25); }
+body.login-mode .login-card button:hover { filter: brightness(1.05); }
 
-/* 애니메이션 */
-.login-slide-in {
-  transform: translateX(0);
-  opacity: 1;
-}
-.login-slide-out {
-  transform: translateX(-120%);
-  opacity: 0;
-}
+.login-slide-in { transform: translateX(0); opacity: 1; }
+.login-slide-out { transform: translateX(-120%); opacity: 0; }
 
-/* 룰렛 화면 (상단 고정) */
+/* 룰렛 화면 전체 */
 #rouletteScreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1;
-  height: 100vh;
-  overflow-y: auto;
-  opacity: 0;
-  transition: opacity 0.6s ease;
-
-  padding-top: 24px;   /* 👈 룰렛 화면 맨 위에서 24px 아래로 */
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1;
+  height: 100vh; overflow-y: auto; opacity: 0; transition: opacity 0.6s ease;
+  padding-top: 40px; background: linear-gradient(135deg, #ffffff 0%, #fff7f0 100%); color: #333;
 }
+#rouletteScreen.fade-in { opacity: 1; }
 
-
-/* fade-in 효과 */
-#rouletteScreen.fade-in {
-  opacity: 1;
-}
-
-/* 실제 앱 레이아웃 */
 .app {
-  display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 16px;
-  padding: 16px;
-  align-items: start;
+  display: grid; grid-template-columns: 1fr 360px; gap: 16px; padding: 16px; align-items: start;
+}
+.roulette-area { display: flex; flex-direction: column; align-items: center; }
+
+/* 패널 래퍼 (오른쪽으로 슬라이드, 내부 노출 방지) */
+.panel-wrap {
+  position: relative;
+  padding-top: 20px;
+  transition: transform 0.36s cubic-bezier(.2,.9,.2,1), opacity 0.36s ease, visibility 0.36s ease;
+  will-change: transform;
+  overflow: hidden;
+  z-index: 30; /* 패널은 기본적으로 룰렛보다 낮게 두고 JS로 translateX 처리 */
 }
 
-.roulette-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
+/* collapse-down: transform은 JS에서 inline 제어 (translateX) */
+.panel-wrap.collapse-down {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: none;
 }
 
-.panel {
-  background: var(--panel);
-  border: 1px solid #1f2430;
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* 접힌 상태에서도 화살표는 클릭 가능 */
+.panel-wrap.collapse-down .arrow-btn {
+  pointer-events: auto;
+  z-index: 90;
 }
 
-.row { display: flex; gap: 8px; }
-
-button {
-  appearance: none;
-  border: 1px solid #29406a;
-  background: #173059;
-  color: #dbe7ff;
-  padding: 10px 14px;
-  border-radius: 10px;
+/* 화살표 버튼: 좌측 상단 고정 */
+.arrow-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: auto;
+  transform: none;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  line-height: 40px;
+  background: #ff7a1a;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
   cursor: pointer;
-  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  z-index: 95;
+  pointer-events: auto;
 }
-button:hover { filter: brightness(1.1); }
 
+/* 패널 카드 */
+.panel {
+  background: #ffffff; border: 1px solid #eee; border-radius: 12px; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.36s cubic-bezier(.2,.9,.2,1);
+  z-index: 40;
+}
+.panel h2 { color: #ff7a1a; font-weight: 700; }
+
+/* 버튼 줄 기본 스타일 (transition 유지) */
+.row { transition: margin 0.28s ease; display: flex; gap: 8px; justify-content: center; }
+
+/* 기본 버튼 스타일 */
+button {
+  appearance: none; border: none; background: linear-gradient(90deg, #ff7a1a, #ff9e3d);
+  color: #fff; padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
+  transition: transform 0.2s ease, padding 0.28s ease, font-size 0.28s ease;
+}
+button:hover { transform: scale(1.05); }
+
+/* 룰렛 영역 (룰렛을 위로 보이게 z-index 조정) */
 .wheel-wrap {
   position: relative;
   width: min(68vmin, 600px);
   height: min(68vmin, 600px);
+  transition: transform 0.32s cubic-bezier(.2,.9,.2,1), box-shadow 0.32s, margin 0.32s ease;
+  overflow: visible; /* 스케일 시 캔버스 잘림 방지 */
+  z-index: 80; /* 룰렛이 패널보다 위에 보이도록 설정 */
 }
-
 canvas#wheel {
-  width: 100%;
-  height: 100%;
-  display: block;
+  width: 100%; height: 100%; display: block;
+  border: none; outline: none;
   border-radius: 50%;
-  box-shadow: 0 0 0 2px #202636,
-              0 10px 30px rgba(0,0,0,0.4) inset;
-  background: #0c0f14;
+  background: transparent !important;  /* 네모 박스 제거 */
+  box-shadow: none !important;         /* 네모 박스 제거 */
+  clip-path: circle(50%);              /* 원형 마스킹 강제 */
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
-
 .pointer {
-  position: absolute;
-  top: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0; height: 0;
-  border-left: 14px solid transparent;
-  border-right: 14px solid transparent;
-  border-top: 20px solid var(--accent);
+  position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+  width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 20px solid #ff7a1a;
 }
 
 .muted { color: var(--muted); }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: center; }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 8px;
-  align-items: center;
+input {
+  width: 100%; border: 1px solid #ddd; border-radius: 10px; background: #f9f9f9; color: #333; padding: 10px;
 }
 
-input, textarea {
-  width: 100%;
-  border: 1px solid #263044;
-  border-radius: 10px;
-  background: #0f141b;
-  color: var(--text);
-  padding: 10px;
-}
-
-textarea { height: 160px; resize: vertical; }
-
-.list-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
+.list-head { display: flex; justify-content: space-between; align-items: center; }
 .list {
-  list-style: none;
-  padding: 0;
-  margin: 8px 0 0;
-  display: grid;
-  gap: 8px;
-  max-height: 38vh;
-  overflow: auto;
+  list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 8px; max-height:38vh; overflow:auto;
 }
-
 .list li {
-  background: #121621;
-  border: 1px solid #1f2430;
-  border-radius: 10px;
-  padding: 10px;
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  align-items: center;
+  background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 10px;
+  display: grid; grid-template-columns: 1fr auto auto; align-items: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+.badge { color: #ff7a1a; font-weight: 600; }
+
+/* 접힘 시: 스크롤 잠금 + 스크롤바 숨김 */
+body.panel-is-collapsed,
+body.panel-is-collapsed * {
+  overscroll-behavior: none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+body.panel-is-collapsed::-webkit-scrollbar,
+body.panel-is-collapsed *::-webkit-scrollbar {
+  display: none; width: 0; height: 0;
 }
 
-.badge { color: #aeb8ca; }
+/* 접힘 상태: 룰렛 확대/이동 및 버튼 레이아웃 변경
+   - 요구: 버튼 크기 줄이고 버튼 줄을 위로 당김 (겹침 방지)
+   - 룰렛은 아티팩트 방지를 위해 캔버스 그림자 제거 및 확장 완화
+*/
+body.panel-collapsed .wheel-wrap {
+  transform: translateY(14px) scale(1.08); /* 아래로 14px, 크기 1.08배 */
+  box-shadow: none; /* 아티팩트 방지 */
+}
+body.panel-collapsed .row {
+  margin-top: 6px; /* 버튼 줄을 위로 당김 */
+  gap: 10px;
+}
+body.panel-collapsed .row button {
+  padding: 8px 12px; /* 버튼 크기 축소 */
+  font-size: 14px;
+  min-width: 88px;
+  border-radius: 8px;
+  transform: none;
+}
 
+/* 모바일에서의 조정(덜 과장되게) */
 @media (max-width: 820px) {
-  .app {
-    grid-template-columns: 1fr;
-  }
+  .app { grid-template-columns: 1fr; }
   .panel { order: 2; }
+  :root { --arrow-visible: 60px; }
+
+  body.panel-collapsed .wheel-wrap {
+    transform: translateY(10px) scale(1.06); /* 모바일에서 더 완화 */
+  }
+  body.panel-collapsed .row {
+    margin-top: 10px;
+  }
+  body.panel-collapsed .row button {
+    padding: 8px 10px;
+    font-size: 13px;
+    min-width: 80px;
+  }
+
+  /* 화살표 보정 */
+  .arrow-btn { left: 10px; top: 10px; width: 36px; height: 36px; font-size: 16px; line-height:36px; }
+}
+
+/* 추가 안정화: 휠/터치 차단 시 레이아웃 흔들림 최소화 */
+body.panel-is-collapsed .wheel-wrap,
+body.panel-collapsed .wheel-wrap {
+  will-change: transform;
+}
+
+/* 룰렛 아래 버튼을 항상 룰렛보다 위에 표시 (명시적 z-index) */
+.row {
+  position: relative;
+  z-index: 120;
+}
+.row button {
+  position: relative;
+  z-index: 130;
 }
