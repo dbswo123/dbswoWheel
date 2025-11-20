@@ -86,15 +86,18 @@ loginBtn.addEventListener('click', () => {
       document.body.classList.remove('login-mode');
     }, fadeDuration);
 
-    // Google Apps Script로 JSON 전송 (Apps Script의 JSON 파싱과 매칭)
-    const payload = { name, phone };
+    // Google Apps Script로 FormData 전송 (CORS 회피: no-cors)
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('phone', phone);
 
-    fetch('https://script.google.com/macros/s/AKfycbzgDJ0wxbWV0SY1vftQcWtMIlQ_NnkfbiKHwCYfQ2uyxAC0qDrkrBHDTvuV230KVx0/exec', {
+    // exec URL로 교체하세요
+    fetch('https://script.google.com/macros/s/AKfycbzKeTDSq4GSEIKN33lEOnqKvd9X3zt1PvxV9CsMIJmKbEsEe8sfvAv2h4eUjPvjymzC/exec', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      mode: 'no-cors',
+      body: formData
     }).catch(() => {
-      // 응답 처리나 에러 알림은 선택 사항 (no-cors가 아니므로 에러 캐치 가능)
+      // no-cors 모드에서는 응답을 읽을 수 없으므로 에러 처리만 보류
     });
 
     // localStorage 저장
@@ -141,13 +144,10 @@ function drawWheel() {
 
   if (items.length === 0) {
     ctx.fillStyle = '#222a36';
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#9aa3b2';
     ctx.font = 'bold 28px system-ui';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('상품을 추가하세요', cx, cy);
     return;
   }
@@ -159,26 +159,17 @@ function drawWheel() {
     const slice = (Math.PI * 2) * (items[i].probability / totalProb);
     const end = start + slice;
 
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, r, start, end);
-    ctx.closePath();
-    ctx.fillStyle = colorAt(i, items.length);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, start, end); ctx.closePath();
+    ctx.fillStyle = colorAt(i, items.length); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 2; ctx.stroke();
 
     const mid = start + slice / 2;
     const tx = cx + Math.cos(mid) * (r * 0.65);
     const ty = cy + Math.sin(mid) * (r * 0.65);
-    ctx.save();
-    ctx.translate(tx, ty);
-    ctx.rotate(mid + Math.PI / 2);
-    ctx.fillStyle = '#fff';
-    ctx.font = '600 20px system-ui';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.save(); ctx.translate(tx, ty); ctx.rotate(mid + Math.PI / 2);
+    ctx.fillStyle = '#fff'; ctx.font = '600 20px system-ui';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(items[i].item, 0, 0);
     ctx.restore();
 
@@ -186,10 +177,8 @@ function drawWheel() {
   }
 
   // 허브
-  ctx.beginPath();
-  ctx.arc(cx, cy, r * 0.08, 0, Math.PI * 2);
-  ctx.fillStyle = '#e6eefc';
-  ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, r * 0.08, 0, Math.PI * 2);
+  ctx.fillStyle = '#e6eefc'; ctx.fill();
 }
 
 // 결과 표시
@@ -199,7 +188,7 @@ function announceWinner() {
     return;
   }
   const totalProb = items.reduce((sum, x) => sum + x.probability, 0);
-  const pointerAngle = -Math.PI / 2; // 상단 포인터 기준
+  const pointerAngle = -Math.PI / 2; // 상단 포인터
   const a = normalize(pointerAngle - angle);
 
   let acc = 0;
@@ -219,8 +208,7 @@ function tick() {
     angle += spinVel;
     spinVel *= friction;
     if (spinVel < 0.002) {
-      spinning = false;
-      spinVel = 0;
+      spinning = false; spinVel = 0;
       angle = normalize(angle);
       announceWinner();
     }
@@ -242,10 +230,8 @@ addBtn.addEventListener('click', () => {
     return;
   }
   items.push({ item, probability: prob });
-  inputItem.value = '';
-  inputProb.value = '';
-  renderList();
-  drawWheel();
+  inputItem.value = ''; inputProb.value = '';
+  renderList(); drawWheel();
 });
 
 // 대량 입력
@@ -253,21 +239,17 @@ bulkApplyBtn.addEventListener('click', () => {
   const lines = bulkInput.value.split('\n');
   let added = 0, skipped = 0;
   for (const line of lines) {
-    const s = line.trim();
-    if (!s) continue;
+    const s = line.trim(); if (!s) continue;
     const [itemRaw, probRaw] = s.split(',').map(x => (x || '').trim());
-    const item = itemRaw;
-    const prob = parseInt(probRaw, 10);
+    const item = itemRaw; const prob = parseInt(probRaw, 10);
     if (!item || !prob || prob <= 0) { skipped++; continue; }
     if (items.some(x => x.item === item)) { skipped++; continue; }
-    items.push({ item, probability: prob });
-    added++;
+    items.push({ item, probability: prob }); added++;
   }
   if (skipped > 0) alert('중복되는 내용이 있습니다.');
   bulkResult.textContent = `추가 ${added}개, 건너뜀 ${skipped}개`;
   bulkInput.value = '';
-  renderList();
-  drawWheel();
+  renderList(); drawWheel();
 });
 
 // 삭제/수정
@@ -276,8 +258,7 @@ itemList.addEventListener('click', (e) => {
   if (i === undefined) return;
   if (e.target.classList.contains('delBtn')) {
     items.splice(Number(i), 1);
-    renderList();
-    drawWheel();
+    renderList(); drawWheel();
   } else if (e.target.classList.contains('editBtn')) {
     const p = items[Number(i)];
     const item = prompt('상품명 수정', p.item);
@@ -290,8 +271,7 @@ itemList.addEventListener('click', (e) => {
       return;
     }
     items[Number(i)] = { item, probability: prob };
-    renderList();
-    drawWheel();
+    renderList(); drawWheel();
   }
 });
 
@@ -301,15 +281,13 @@ shuffleBtn.addEventListener('click', () => {
     const j = Math.floor(Math.random() * (i + 1));
     [items[i], items[j]] = [items[j], items[i]];
   }
-  renderList();
-  drawWheel();
+  renderList(); drawWheel();
 });
 
 clearBtn.addEventListener('click', () => {
   if (!confirm('전체 삭제하시겠습니까?')) return;
   items = [];
-  renderList();
-  drawWheel();
+  renderList(); drawWheel();
 });
 
 spinBtn.addEventListener('click', () => {
