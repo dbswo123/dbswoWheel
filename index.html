@@ -3,64 +3,63 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>경품추첨기</title>
-  <!-- 외부 CSS 연결 -->
+  <title>상품 확률 룰렛</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app">
-    <!-- 룰렛 중앙 영역 -->
+  <!-- 로그인 화면 -->
+  <div id="loginScreen" class="login-card">
+    <h2>경품 추첨기</h2>
+    <input id="loginName" type="text" placeholder="이름" />
+    <input id="loginPhone" type="tel" placeholder="전화번호 (숫자만)" inputmode="numeric" pattern="[0-9]*"/>
+    <button id="loginBtn">입장</button>
+</div>
+
+  <!-- 룰렛 화면 (처음엔 숨김) -->
+  <div id="rouletteScreen" class="app" style="display:none;">
+    <!-- 룰렛 영역 -->
     <section class="roulette-area">
       <div class="wheel-wrap">
         <div class="pointer"></div>
-        <canvas id="wheel" width="800" height="800" aria-label="룰렛"></canvas>
+        <canvas id="wheel" width="800" height="800"></canvas>
       </div>
-      <div class="row" style="margin-top: 14px;">
+      <div class="row" style="margin-top:14px;">
         <button id="spinBtn">돌리기</button>
         <button id="resetBtn">정지/초기화</button>
       </div>
       <div class="result" id="resultText"></div>
     </section>
 
-    <!-- 오른쪽 이름 입력 패널 -->
-    <!-- 오른쪽 입력 패널 -->
-<aside class="panel">
-    <h2>참가자 입력</h2>
-    <p style="margin:0; color: var(--muted);">
-      이름과 전화번호를 입력 후 “추가”를 누르세요. (전화번호는 중복될 수 없습니다.)
-    </p>
-  
-    <!-- 단일 참가자 추가 폼 -->
-    <div class="form-grid">
-      <input id="inputName" type="text" placeholder="이름" />
-      <input id="inputPhone" type="tel" placeholder="전화번호 (숫자만)" pattern="[0-9]*" inputmode="numeric"/>
-      <button id="addBtn">추가</button>
-    </div>
-  
-    <!-- 일괄 입력: CSV (이름,전화번호) 줄바꿈 -->
-    <details>
-      <summary>한번에 입력하기</summary>
-      <textarea id="bulkInput" placeholder="예)홍길동,01012345678(엔터) 김철수,01098765432(엔터)"></textarea>
-      <div class="row">
-        <button id="bulkApplyBtn">일괄 적용</button>
+    <!-- 입력 패널 -->
+    <aside class="panel">
+      <h2>상품 입력</h2>
+      <p style="margin:0; color: var(--muted);"> 상품명과 확률(%)을 입력 후 “추가”를 누르세요. 상품명은 중복이 불가능합니다.</p>
+      <div class="form-grid">
+        <input id="inputItem" type="text" placeholder="상품명" />
+        <input id="inputProb" type="number" placeholder="확률 (%)" min="1" />
+        <button id="addBtn">추가</button>
       </div>
-      <p class="result" id="bulkResult"></p>
-    </details>
-  
-    <!-- 참가자 리스트 -->
-    <div class="list-head">
-      <span>총 인원: <strong id="countText">0</strong>명</span>
-      <div class="row">
-        <button id="shuffleBtn">섞기</button>
-        <button id="clearBtn">전체삭제</button>
+
+      <details>
+        <summary>한꺼번에 입력하기</summary>
+        <textarea id="bulkInput" placeholder="예)상품A,50(엔터) 상품B,30(엔터)"></textarea>
+        <div class="row">
+          <button id="bulkApplyBtn">일괄 적용</button>
+        </div>
+        <p class="result" id="bulkResult"></p>
+      </details>
+
+      <div class="list-head">
+        <span>총 상품: <strong id="countText">0</strong>개</span>
+        <div class="row">
+          <button id="shuffleBtn">섞기</button>
+          <button id="clearBtn">전체 삭제</button>
+        </div>
       </div>
-    </div>
-    <ul id="participantList" class="list"></ul>
-  </aside>
-  
+      <ul id="itemList" class="list"></ul>
+    </aside>
   </div>
 
-  <!-- 외부 JS 연결 -->
   <script src="script.js"></script>
 </body>
 </html>
