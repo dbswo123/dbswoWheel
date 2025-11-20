@@ -1,27 +1,31 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>상품 확률 룰렛</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Rocket Now</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div class="credit">By.Bori</div>
+
   <!-- 로그인 화면 -->
   <div id="loginScreen" class="login-card login-slide-in">
+    <img src="img/RocketNowLogo.png" alt="Rocket Now" class="brand-logo" />
     <h2>로그인</h2>
     <input id="loginName" type="text" placeholder="이름" />
     <input id="loginPhone" type="tel" placeholder="전화번호 (숫자만)" inputmode="numeric" pattern="[0-9]*" />
     <button id="loginBtn">입장</button>
   </div>
 
-  <!-- 룰렛 화면: 초기에는 숨김 -->
+  <!-- 룰렛 화면 -->
   <div id="rouletteScreen" class="app hidden">
     <section class="roulette-area">
       <div class="wheel-wrap">
         <div class="pointer"></div>
         <canvas id="wheel" width="800" height="800"></canvas>
       </div>
+
       <div class="row" style="margin-top:14px;">
         <button id="spinBtn">돌리기</button>
         <button id="resetBtn">정지/초기화</button>
@@ -29,37 +33,31 @@
       <div class="result" id="resultText"></div>
     </section>
 
-    <aside class="panel">
-      <h2>상품 입력</h2>
-      <p class="muted">상품명과 확률(%)을 입력 후 “추가”를 누르세요. 상품명 중복 불가입니다.</p>
+    <!-- 입력 패널 래퍼: 화살표 클릭 시 오른쪽으로 슬라이드 -->
+    <div class="panel-wrap" id="panelWrap">
+      <button id="togglePanel" class="arrow-btn" aria-expanded="true" aria-controls="productPanel">▶</button>
 
-      <div class="form-grid">
-        <input id="inputItem" type="text" placeholder="상품명" />
-        <input id="inputProb" type="number" placeholder="확률 (%)" min="1" />
-        <button id="addBtn">추가</button>
-      </div>
+      <aside class="panel" id="productPanel" role="region" aria-label="상품 입력">
+        <h2>상품 입력</h2>
+        <p class="muted">상품명과 확률(%)을 입력 후 “추가”를 누르세요.</p>
 
-      <details>
-        <summary>대량 입력 (CSV)</summary>
-        <textarea id="bulkInput" placeholder="예)
-상품A,50
-상품B,30
-상품C,20"></textarea>
-        <div class="row">
-          <button id="bulkApplyBtn">일괄 적용</button>
+        <div class="form-grid">
+          <input id="inputItem" type="text" placeholder="상품명" />
+          <input id="inputProb" type="number" placeholder="확률 (%)" min="1" />
+          <button id="addBtn">추가</button>
         </div>
-        <p class="result" id="bulkResult"></p>
-      </details>
 
-      <div class="list-head">
-        <span>총 상품: <strong id="countText">0</strong>개</span>
-        <div class="row">
-          <button id="shuffleBtn">섞기</button>
-          <button id="clearBtn">전체삭제</button>
+        <div class="list-head">
+          <span>총 상품: <strong id="countText">0</strong>개</span>
+          <div class="row">
+            <button id="shuffleBtn">섞기</button>
+            <button id="clearBtn">전체 삭제</button>
+          </div>
         </div>
-      </div>
-      <ul id="itemList" class="list"></ul>
-    </aside>
+
+        <ul id="itemList" class="list"></ul>
+      </aside>
+    </div>
   </div>
 
   <script src="script.js"></script>
