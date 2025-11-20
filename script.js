@@ -86,7 +86,7 @@ loginBtn.addEventListener('click', () => {
     formData.append("name", name);
     formData.append("phone", phone);
 
-    fetch("https://script.google.com/macros/s/AKfycbyS8kJU2lfPp3zXVtW8TjeUsb88ldvWpgHswtQwKp3G5MG7zVsja1yx2egehe8uXKlq/exec", {
+    fetch("https://script.google.com/macros/s/AKfycbzgDJ0wxbWV0SY1vftQcWtMIlQ_NnkfbiKHwCYfQ2uyxAC0qDrkrBHDTvuV230KVx0/exec", {
       method: "POST",
       mode: "no-cors",
       body: formData   // ⬅ JSON 대신 FormData 사용 (중요)
@@ -300,6 +300,7 @@ loadItems();
 renderList();
 drawWheel();
 tick();
+
 
 
 
