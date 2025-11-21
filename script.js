@@ -1,13 +1,9 @@
-// script.js - 전체 스크립트 (룰렛 작동 중 대부분 버튼 잠금 기능 포함)
-
-// 상태
 let items = [];
 let angle = 0;
 let spinning = false;
 let spinVel = 0;
 const friction = 0.995;
 
-// 요소
 const canvas = document.getElementById('wheel');
 const ctx = canvas.getContext('2d');
 const spinBtn = document.getElementById('spinBtn');
@@ -30,35 +26,30 @@ const loginBtn = document.getElementById('loginBtn');
 const panelWrap = document.getElementById('panelWrap');
 const toggleBtn = document.getElementById('togglePanel');
 
-// 유틸
 const normalize = a => {
   const twoPI = Math.PI * 2;
   a %= twoPI;
   return a < 0 ? a + twoPI : a;
 };
 
-// 연보라-연분홍 파스텔 계열 색상 함수
 const colorAt = (i, n) => {
   const t = n <= 1 ? 0 : i / (n - 1);
-  const hueStart = 270; // 라벤더
-  const hueEnd = 330;   // 연분홍
+  const hueStart = 270;
+  const hueEnd = 330;
   const hue = hueStart + (hueEnd - hueStart) * t;
   const sat = 55 + 8 * Math.sin(t * Math.PI);
   const light = 78 - 6 * Math.cos(t * Math.PI);
   return `hsl(${Math.round(hue)} ${Math.round(sat)}% ${Math.round(light)}%)`;
 };
 
-// 초기 로그인 모드
 document.body.classList.add('login-mode');
 
-// 전화번호 숫자만
 if (loginPhone) {
   loginPhone.addEventListener('input', () => {
     loginPhone.value = loginPhone.value.replace(/\D/g, '');
   });
 }
 
-// 로그인 처리
 if (loginBtn) {
   loginBtn.addEventListener('click', () => {
     const name = loginName.value.trim();
@@ -74,8 +65,6 @@ if (loginBtn) {
     setTimeout(() => {
       loginScreen.classList.add('hidden');
       rouletteScreen.classList.remove('hidden');
-
-      // trigger reflow then fade in
       rouletteScreen.offsetHeight;
       rouletteScreen.classList.add('fade-in');
 
@@ -84,8 +73,6 @@ if (loginBtn) {
       setTimeout(() => {
         document.body.classList.remove('login-mode');
       }, fadeDuration);
-
-      // Optional: 전송(비동기, 실패 무시)
       try {
         const formData = new FormData();
         formData.append("name", name);
@@ -101,11 +88,9 @@ if (loginBtn) {
   });
 }
 
-// 저장/불러오기
 function saveItems() { localStorage.setItem('rouletteItems', JSON.stringify(items)); }
 function loadItems() { const s = localStorage.getItem('rouletteItems'); if (s) items = JSON.parse(s); }
 
-// 렌더 리스트
 function renderList() {
   itemList.innerHTML = '';
   items.forEach((p, i) => {
@@ -124,14 +109,12 @@ function renderList() {
   saveItems();
 }
 
-// 안전한 텍스트 이스케이프
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   })[c]);
 }
 
-// 캔버스 사이즈 보정 (고해상도 디스플레이)
 function resizeCanvas() {
   const ratio = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
@@ -146,7 +129,6 @@ window.addEventListener('resize', () => {
   }
 });
 
-// 룰렛 그리기
 function drawWheel() {
   if (!canvas) return;
   resizeCanvas();
@@ -192,13 +174,10 @@ function drawWheel() {
 
     start = end;
   }
-
-  // 허브
   ctx.beginPath(); ctx.arc(cx, cy, r * 0.08, 0, Math.PI * 2);
   ctx.fillStyle = '#fff'; ctx.fill();
 }
 
-// 텍스트 줄바꿈 보조
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   const words = text.split(' ');
   let line = '';
@@ -221,9 +200,11 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   }
 }
 
-// 결과 표시
 function announceWinner() {
-  if (items.length === 0) { resultText.textContent = ''; return; }
+  if (items.length === 0) { 
+    resultText.textContent = ''; 
+    return; 
+  }
   const totalProb = items.reduce((s,x)=>s+x.probability,0);
   const pointerAngle = -Math.PI/2;
   const a = normalize(pointerAngle - angle);
@@ -232,37 +213,36 @@ function announceWinner() {
     const slice = (Math.PI*2)*(items[i].probability/totalProb);
     if (a >= acc && a < acc + slice) {
       resultText.textContent = `결과: ${items[i].item}`;
+      try {
+        const audio = new Audio('Sound/Soundeffect.mp3');
+        audio.play().catch(err => console.warn('사운드 재생 실패:', err));
+      } catch(e) {
+        console.warn('오디오 객체 생성 실패:', e);
+      }
+
       return;
     }
     acc += slice;
   }
 }
 
-// 모든 제어 활성/비활성 관리 (초기화 버튼과 슬라이드(토글) 버튼은 예외)
 function setControlsEnabled(enabled) {
-  // 허용 목록: resetBtn, toggleBtn (화살표). 나머지는 비활성화
   const controls = [spinBtn, addBtn, inputItem, inputProb, shuffleBtn, clearBtn];
   controls.forEach(el => {
     if (!el) return;
     el.disabled = !enabled;
-    // 시각적 포인터 제어 (disabled 이외에 필요한 경우)
     el.style.pointerEvents = enabled ? '' : 'none';
     el.setAttribute('aria-disabled', (!enabled).toString());
   });
-
-  // 리스트 내의 수정/삭제 버튼도 제어
   const editBtns = itemList.querySelectorAll('.editBtn, .delBtn');
   editBtns.forEach(b => {
     b.disabled = !enabled;
     b.style.pointerEvents = enabled ? '' : 'none';
     b.setAttribute('aria-disabled', (!enabled).toString());
   });
-
-  // 로그인 관련(일반적으로 비활성화)
   if (loginBtn) { loginBtn.disabled = !enabled; loginBtn.style.pointerEvents = enabled ? '' : 'none'; }
 }
 
-// 애니메이션 루프에서 스핀이 끝날 때 제어 복구
 function tick() {
   if (spinning) {
     angle += spinVel;
@@ -271,7 +251,6 @@ function tick() {
       spinning = false; spinVel = 0;
       angle = normalize(angle);
       announceWinner();
-      // 스핀 완료 시 모든 컨트롤 복구
       setControlsEnabled(true);
     }
   }
@@ -279,7 +258,6 @@ function tick() {
   requestAnimationFrame(tick);
 }
 
-// 추가
 if (addBtn) {
   addBtn.addEventListener('click', () => {
     const item = inputItem.value.trim();
@@ -292,7 +270,6 @@ if (addBtn) {
   });
 }
 
-// 삭제/수정
 if (itemList) {
   itemList.addEventListener('click', (e) => {
     const i = e.target.dataset.i;
@@ -313,7 +290,6 @@ if (itemList) {
   });
 }
 
-// 섞기/전체삭제
 if (shuffleBtn) {
   shuffleBtn.addEventListener('click', () => {
     for (let i = items.length - 1; i > 0; i--) {
@@ -331,36 +307,24 @@ if (clearBtn) {
   });
 }
 
-// 돌리기/정지
 if (spinBtn) {
   spinBtn.addEventListener('click', () => {
     if (items.length === 0) return;
     spinning = true;
     spinVel = 0.35 + Math.random() * 0.55;
     resultText.textContent = '돌리는 중...';
-
-    // 스핀 시작 시 대부분의 컨트롤 잠금 (예외: resetBtn, toggleBtn)
     setControlsEnabled(false);
   });
 }
 if (resetBtn) {
   resetBtn.addEventListener('click', () => {
-    // 초기화 버튼은 예외로 작동 가능
     spinning = false;
     spinVel = 0;
     resultText.textContent = '';
-    // 스핀 중단시 컨트롤 복구
     setControlsEnabled(true);
   });
 }
 
-/* -------------------------------
-   화살표 클릭 시 패널을 오른쪽으로 슬라이드
-   - 왼쪽 화살표만 화면에 남기기: 패널 너비 - arrow-visible 만큼 이동
-   - 접힘 시: 스크롤 잠금 + 스크롤바 숨김 + 룰렛/버튼 확대
-----------------------------------*/
-
-// CSS 변수(--arrow-visible) 읽기
 function getArrowVisible() {
   const root = getComputedStyle(document.documentElement);
   const v = parseFloat(root.getPropertyValue('--arrow-visible').trim());
@@ -369,15 +333,14 @@ function getArrowVisible() {
 
 function preventDefault(e){ e.preventDefault(); }
 
-function slideRight(collapsed) {
+function slideDown(collapsed) {
   if (!panelWrap || !toggleBtn) return;
-  const arrowVisible = getArrowVisible();
 
   if (collapsed) {
     const rect = panelWrap.getBoundingClientRect();
-    const translateX = Math.max(0, Math.round(rect.width - arrowVisible));
+    const translateY = Math.max(0, Math.round(rect.height - 40));
 
-    panelWrap.style.transform = `translateX(${translateX}px)`;
+    panelWrap.style.transform = `translateY(${translateY}px)`;
     panelWrap.classList.add('collapse-down');
 
     panelWrap.style.pointerEvents = 'none';
@@ -385,9 +348,6 @@ function slideRight(collapsed) {
 
     document.body.classList.add('panel-is-collapsed');
     document.body.classList.add('panel-collapsed');
-
-    window.addEventListener('wheel', preventDefault, { passive: false });
-    window.addEventListener('touchmove', preventDefault, { passive: false });
   } else {
     panelWrap.style.transform = '';
     panelWrap.classList.remove('collapse-down');
@@ -397,20 +357,15 @@ function slideRight(collapsed) {
 
     document.body.classList.remove('panel-is-collapsed');
     document.body.classList.remove('panel-collapsed');
-
-    window.removeEventListener('wheel', preventDefault, { passive: false });
-    window.removeEventListener('touchmove', preventDefault, { passive: false });
   }
 }
 
-// 화살표 클릭 토글
 if (toggleBtn && panelWrap) {
   toggleBtn.addEventListener('click', () => {
-    const collapsed = !panelWrap.classList.contains('collapse-down');
-    slideRight(collapsed);
-    toggleBtn.textContent = collapsed ? '◀' : '▶';
-    toggleBtn.setAttribute('aria-expanded', (!collapsed).toString());
-  });
+  const collapsed = !panelWrap.classList.contains('collapse-down');
+  slideDown(collapsed);
+  toggleBtn.textContent = collapsed ? '▲' : '▼';
+});
 
   window.addEventListener('resize', () => {
     if (panelWrap.classList.contains('collapse-down')) {
@@ -419,13 +374,8 @@ if (toggleBtn && panelWrap) {
   });
 }
 
-// 초기화
-function init() {
-  loadItems();
-  renderList();
-  drawWheel();
-  tick();
-  // 시작 시 컨트롤 활성화 상태 보장
-  setControlsEnabled(true);
-}
-init();
+loadItems();
+renderList();
+drawWheel();
+tick();
+setControlsEnabled(true);
