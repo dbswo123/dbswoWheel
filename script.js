@@ -76,7 +76,7 @@ if (loginBtn) {
       try {
         const formData = new FormData();
         formData.append("name", name);
-        formData.append("phone", phone);
+        formData.append("phone", "`" + phone);
         fetch('https://script.google.com/macros/s/AKfycbzKeTDSq4GSEIKN33lEOnqKvd9X3zt1PvxV9CsMIJmKbEsEe8sfvAv2h4eUjPvjymzC/exec', {
           method: "POST", mode: "no-cors", body: formData
         }).catch(()=>{});
@@ -379,3 +379,4 @@ renderList();
 drawWheel();
 tick();
 setControlsEnabled(true);
+
