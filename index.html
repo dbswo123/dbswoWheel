@@ -8,17 +8,14 @@
 </head>
 <body>
   <div class="credit">By.Bori</div>
-
-  <!-- 로그인 화면 -->
   <div id="loginScreen" class="login-card login-slide-in">
     <img src="img/RocketNowLogo.png" alt="Rocket Now" class="brand-logo" />
-    <h2>로그인</h2>
-    <input id="loginName" type="text" placeholder="이름" />
-    <input id="loginPhone" type="tel" placeholder="전화번호 (숫자만)" inputmode="numeric" pattern="[0-9]*" />
-    <button id="loginBtn">입장</button>
+    <h2>Log-in</h2>
+    <input id="loginName" type="text" placeholder="店舗名" />
+    <input id="loginPhone" type="tel" placeholder="電話番号 (Only Number)" inputmode="numeric" pattern="[0-9]*" />
+    <button id="loginBtn">入場する</button>
   </div>
 
-  <!-- 룰렛 화면 -->
   <div id="rouletteScreen" class="app hidden">
     <section class="roulette-area">
       <div class="wheel-wrap">
@@ -33,7 +30,6 @@
       <div class="result" id="resultText"></div>
     </section>
 
-    <!-- 입력 패널 래퍼: 화살표 클릭 시 오른쪽으로 슬라이드 -->
     <div class="panel-wrap" id="panelWrap">
       <button id="togglePanel" class="arrow-btn" aria-expanded="true" aria-controls="productPanel">▶</button>
 
