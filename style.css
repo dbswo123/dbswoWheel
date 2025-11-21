@@ -340,7 +340,7 @@ body.panel-is-collapsed *::-webkit-scrollbar {
 }
 
 body.panel-collapsed .wheel-wrap {
-  transform: translateY(14px) scale(1.08);
+  transform: translateY(50px) scale(1.25);
   box-shadow: none;
 }
 
@@ -363,7 +363,7 @@ body.panel-collapsed .row button {
   :root { --arrow-visible: 60px; }
 
   body.panel-collapsed .wheel-wrap {
-    transform: translateY(10px) scale(1.06);
+    transform: translateY(30px) scale(1.15);
   }
 
   body.panel-collapsed .row {
